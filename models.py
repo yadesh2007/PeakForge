@@ -33,26 +33,24 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    age = db.Column(db.Integer)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    profile_completed = db.Column(db.Boolean, nullable=False, default=False)
     onboarding_completed = db.Column(db.Boolean, nullable=False, default=False)
     profile_image_path = db.Column(db.String(255))
     created_at = db.Column(db.String(64), nullable=False)
-
-    @property
-    def profile_completed(self):
-        return self.onboarding_completed
-
-    @profile_completed.setter
-    def profile_completed(self, value):
-        self.onboarding_completed = bool(value)
 
 
 DATABASE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    age INTEGER,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
+    profile_completed INTEGER NOT NULL DEFAULT 0,
     onboarding_completed INTEGER NOT NULL DEFAULT 0,
     profile_image_path TEXT,
     created_at TEXT NOT NULL

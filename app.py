@@ -13,25 +13,15 @@ from category_workouts import attach_workout_details
 from models import DATABASE_SCHEMA, db, User
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DATABASE_PATH = os.path.join(BASE_DIR, "instance", "fitness_tracker.db")
+DATABASE_PATH = os.path.join(BASE_DIR, "instance", "fitness.db")
 
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-change-me")
 app.config["DATABASE"] = DATABASE_PATH
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH}"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///fitness.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
-_db_create_all = db.create_all
-
-
-def create_all_with_app_context(*args, **kwargs):
-    with app.app_context():
-        init_db()
-        return _db_create_all(*args, **kwargs)
-
-
-db.create_all = create_all_with_app_context
 
 PROFILE_IMAGE_UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "profile_images")
 PROFILE_IMAGE_URL_PREFIX = "uploads/profile_images"
@@ -862,6 +852,20 @@ def init_db():
     user_columns = {
         row[1] for row in db.execute("PRAGMA table_info(users)").fetchall()
     }
+    if "name" not in user_columns:
+        db.execute("ALTER TABLE users ADD COLUMN name TEXT")
+        db.commit()
+        user_columns.add("name")
+    if "age" not in user_columns:
+        db.execute("ALTER TABLE users ADD COLUMN age INTEGER")
+        db.commit()
+        user_columns.add("age")
+    if "profile_completed" not in user_columns:
+        db.execute(
+            "ALTER TABLE users ADD COLUMN profile_completed INTEGER NOT NULL DEFAULT 0"
+        )
+        db.commit()
+        user_columns.add("profile_completed")
     if "onboarding_completed" not in user_columns:
         db.execute(
             "ALTER TABLE users ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0"
@@ -899,6 +903,50 @@ def init_db():
         )
         db.commit()
         profile_columns.add("workout_streak_days")
+
+    db.execute(
+        """
+        UPDATE users
+        SET name = (
+                SELECT profiles.full_name
+                FROM profiles
+                WHERE profiles.user_id = users.id
+            ),
+            age = (
+                SELECT profiles.age
+                FROM profiles
+                WHERE profiles.user_id = users.id
+            )
+        WHERE EXISTS (
+            SELECT 1
+            FROM profiles
+            WHERE profiles.user_id = users.id
+              AND TRIM(COALESCE(profiles.full_name, '')) != ''
+              AND profiles.age IS NOT NULL
+              AND profiles.age > 0
+        )
+        """
+    )
+    db.execute(
+        """
+        UPDATE users
+        SET profile_completed = CASE
+                WHEN TRIM(COALESCE(name, '')) != ''
+                 AND age IS NOT NULL
+                 AND age > 0
+                THEN 1
+                ELSE 0
+            END,
+            onboarding_completed = CASE
+                WHEN TRIM(COALESCE(name, '')) != ''
+                 AND age IS NOT NULL
+                 AND age > 0
+                THEN 1
+                ELSE 0
+            END
+        """
+    )
+    db.commit()
 
     workout_session_columns = {
         row[1] for row in db.execute("PRAGMA table_info(workout_sessions)").fetchall()
@@ -1093,7 +1141,7 @@ def profile_required(view):
 
         user = get_current_user()
         profile = get_profile(session["user_id"])
-        if not user or not has_minimum_profile(profile):
+        if not user or not has_completed_profile(user, profile):
             return redirect(url_for("onboarding"))
 
         return view(**kwargs)
@@ -1121,34 +1169,37 @@ def has_minimum_profile(profile):
     return bool(full_name) and age > 0
 
 
+def has_completed_profile(user, profile=None):
+    if user:
+        name = str(user["name"] or "").strip() if "name" in user.keys() else ""
+        try:
+            age = int(user["age"]) if "age" in user.keys() else 0
+        except (TypeError, ValueError):
+            age = 0
+        if name and age > 0:
+            return True
+
+    return has_minimum_profile(profile)
+
+
 def get_current_user():
     user_id = session.get("user_id")
     if not user_id:
         return None
 
     return get_db().execute(
-        "SELECT id, email, onboarding_completed, profile_image_path, created_at FROM users WHERE id = ?",
+        """
+        SELECT id, name, age, email, profile_completed, onboarding_completed,
+               profile_image_path, created_at
+        FROM users
+        WHERE id = ?
+        """,
         (user_id,),
     ).fetchone()
 
 
 def is_profile_incomplete(profile, user=None):
-    if not profile:
-        return False
-
-    numeric_fields = ("height_cm", "start_weight_kg", "goal_weight_kg")
-    for field in numeric_fields:
-        try:
-            if float(profile[field] or 0) <= 0:
-                return True
-        except (TypeError, ValueError):
-            return True
-
-    optional_text_fields = ("goal", "gender", "nationality")
-    if any(not str(profile[field] or "").strip() for field in optional_text_fields):
-        return True
-
-    return user is not None and not user["profile_image_path"]
+    return not has_completed_profile(user, profile)
 
 
 def get_local_today():
@@ -1286,7 +1337,7 @@ def index():
 
     user = get_current_user()
     profile = get_profile(session["user_id"])
-    if not user or not has_minimum_profile(profile):
+    if not user or not has_completed_profile(user, profile):
         return redirect(url_for("onboarding"))
 
     return redirect(url_for("home"))
@@ -1346,7 +1397,7 @@ def login():
             session["user_id"] = user["id"]
             flash("Welcome back.", "success")
             profile = get_profile(user["id"])
-            next_endpoint = "home" if has_minimum_profile(profile) else "onboarding"
+            next_endpoint = "home" if has_completed_profile(user, profile) else "onboarding"
             return redirect(url_for(next_endpoint))
 
     return render_template("login.html")
@@ -1363,8 +1414,9 @@ def logout():
 @app.route("/onboarding", methods=("GET", "POST"))
 @login_required
 def onboarding():
+    user = get_current_user()
     profile = get_profile(session["user_id"])
-    if request.method == "GET" and has_minimum_profile(profile):
+    if request.method == "GET" and has_completed_profile(user, profile):
         return redirect(url_for("home"))
 
     if request.method == "POST":
@@ -1447,8 +1499,12 @@ def onboarding():
                     )
 
                 db.execute(
-                    "UPDATE users SET onboarding_completed = 1 WHERE id = ?",
-                    (session["user_id"],),
+                    """
+                    UPDATE users
+                    SET name = ?, age = ?, profile_completed = 1, onboarding_completed = 1
+                    WHERE id = ?
+                    """,
+                    (full_name, age_value, session["user_id"]),
                 )
                 db.commit()
                 flash("Profile saved. Your tracker is ready.", "success")
@@ -2237,7 +2293,9 @@ def compute_streak(activity_dates, today):
     return streak
 
 
-db.create_all()
+with app.app_context():
+    init_db()
+    db.create_all()
 
 
 if __name__ == "__main__":
