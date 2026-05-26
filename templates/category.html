@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category['name'] }} | PeakForge{% endblock %}
+{% block body_class %}category-page{% endblock %}
+
+{% block content %}
+  <main class="category-layout">
+    <section class="category-hero scroll-animate">
+      <p class="eyebrow section-title">Workout plan</p>
+      <h1>{{ category['name'] }}</h1>
+      <p class="support-copy">{{ category['tagline'] }}</p>
+      <p class="category-frequency">
+        Recommended training frequency: <strong>{{ category['frequency'] }}</strong>
+      </p>
+      <p class="category-goal-summary">
+        Coach focus: {{ category['focus']|join(" / ") }}
+      </p>
+      <div class="home-actions">
+        <a href="{{ url_for('profile') }}#workout-log" class="button primary-button">Log workout</a>
+      </div>
+    </section>
+
+    <section class="category-dashboard-grid scroll-animate" aria-label="{{ category['name'] }} coaching dashboard">
+      <article class="category-dashboard-card scroll-animate">
+        <small>Frequency</small>
+        <strong>{{ category['frequency'] }}</strong>
+        <span>Repeatable weekly training rhythm</span>
+      </article>
+      <article class="category-dashboard-card scroll-animate">
+        <small>Split options</small>
+        <strong>{{ category['splits']|length }}</strong>
+        <span>Choose one plan and run it consistently</span>
+      </article>
+      <article class="category-dashboard-card scroll-animate">
+        <small>Weekly structure</small>
+        <strong>{{ category['splits'][0]['schedule']|length }} days</strong>
+        <span>Start with the first split if unsure</span>
+      </article>
+      <article class="category-dashboard-card scroll-animate">
+        <small>Coach reminder</small>
+        <strong>{{ category['focus'][0] }}</strong>
+        <span>{{ category['tips'][0] }}</span>
+      </article>
+    </section>
+
+    <section class="category-content scroll-animate">
+      <div class="category-section scroll-animate">
+        <p class="eyebrow section-title">Starter blueprint</p>
+        <ul class="starter-blueprint-list">
+          {% for step in category['starter_plan'] %}
+            <li>{{ step }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+
+    <section class="category-section scroll-animate">
+      <div class="category-section-heading">
+        <div>
+          <p class="eyebrow section-title">Split selection panel</p>
+          <h2>Pick your coaching track</h2>
+        </div>
+      </div>
+      <div class="split-grid">
+        {% for split in category['splits'] %}
+          <details class="split-card workout-split-card scroll-animate">
+            <summary>
+              <span>{{ split['name'] }}</span>
+              <small>{{ split['best_for'] }}</small>
+            </summary>
+            <div class="split-schedule">
+              <p class="eyebrow">Weekly schedule</p>
+              <div class="workout-day-list">
+                {% for day in split['schedule_details'] %}
+                  <details class="workout-day">
+                    <summary>{{ day['label'] }}</summary>
+                    <div class="workout-day-body">
+                      <p><strong>Muscle groups:</strong> {{ day['muscles'] }}</p>
+                      <div class="exercise-table">
+                        <div class="exercise-row exercise-head">
+                          <span>Exercise</span>
+                          <span>Sets</span>
+                          <span>Reps</span>
+                        </div>
+                        {% for exercise in day['exercises'] %}
+                          <div class="exercise-row">
+                            <span>{{ exercise['name'] }}</span>
+                            <span>{{ exercise['sets'] }}</span>
+                            <span>{{ exercise['reps'] }}</span>
+                          </div>
+                        {% endfor %}
+                      </div>
+                      <div class="rest-notes">
+                        <strong>Rest</strong>
+                        <ul>
+                          {% for rest in day['rest'] %}
+                            <li>{{ rest }}</li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                      <p class="training-note">{{ day['notes'] }}</p>
+                    </div>
+                  </details>
+                {% endfor %}
+              </div>
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="category-education-grid scroll-animate">
+      <div class="category-section golden-rules scroll-animate">
+        <p class="eyebrow section-title">Golden rules</p>
+        <ul class="category-rule-list">
+          {% for rule in category['golden_rules'] %}
+            <li>{{ rule }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="category-section scroll-animate">
+        <p class="eyebrow section-title">Coaching tips</p>
+        <ul class="category-rule-list">
+          {% for tip in category['tips'] %}
+            <li>{{ tip }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    const workoutDays = document.querySelectorAll(".workout-day");
+    const workoutSplitCards = document.querySelectorAll(".workout-split-card");
+    const accordionCloseDelay = 430;
+
+    function setAccordionPanel(panel, open) {
+      if (!panel) {
+        return;
+      }
+
+      if (open) {
+        panel.style.maxHeight = `${panel.scrollHeight}px`;
+        return;
+      }
+
+      panel.style.maxHeight = `${panel.scrollHeight}px`;
+      window.requestAnimationFrame(() => {
+        panel.style.maxHeight = "0px";
+      });
+    }
+
+    function refreshOpenSplitHeight(element) {
+      const splitPanel = element?.closest(".split-schedule");
+      if (splitPanel?.closest(".workout-split-card")?.classList.contains("open")) {
+        window.requestAnimationFrame(() => {
+          splitPanel.style.maxHeight = `${splitPanel.scrollHeight}px`;
+        });
+      }
+    }
+
+    function resetWorkoutDays(card) {
+      card.querySelectorAll(".workout-day").forEach((day) => {
+        closeWorkoutDay(day);
+      });
+    }
+
+    function closeSplitCard(card) {
+      const panel = card.querySelector(".split-schedule");
+
+      card.classList.remove("open", "active", "expanded");
+      setAccordionPanel(panel, false);
+      resetWorkoutDays(card);
+      window.setTimeout(() => {
+        if (!card.classList.contains("open")) {
+          card.open = false;
+        }
+      }, accordionCloseDelay);
+    }
+
+    function openSplitCard(card) {
+      const panel = card.querySelector(".split-schedule");
+
+      card.open = true;
+      window.requestAnimationFrame(() => {
+        card.classList.add("open", "active", "expanded");
+        setAccordionPanel(panel, true);
+      });
+    }
+
+    function closeWorkoutDay(day) {
+      const panel = day.querySelector(".workout-day-body");
+
+      day.classList.remove("open", "active");
+      setAccordionPanel(panel, false);
+      refreshOpenSplitHeight(day);
+      window.setTimeout(() => {
+        if (!day.classList.contains("open")) {
+          day.open = false;
+          refreshOpenSplitHeight(day);
+        }
+      }, accordionCloseDelay);
+    }
+
+    function openWorkoutDay(day) {
+      const panel = day.querySelector(".workout-day-body");
+
+      day.open = true;
+      window.requestAnimationFrame(() => {
+        day.classList.add("open", "active");
+        setAccordionPanel(panel, true);
+        refreshOpenSplitHeight(day);
+      });
+    }
+
+    workoutSplitCards.forEach((card) => {
+      const summary = card.querySelector("summary");
+
+      summary.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        if (card.classList.contains("open")) {
+          closeSplitCard(card);
+          return;
+        }
+
+        workoutSplitCards.forEach((otherCard) => {
+          if (otherCard !== card) {
+            closeSplitCard(otherCard);
+          }
+        });
+        openSplitCard(card);
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".workout-split-card")) {
+        workoutSplitCards.forEach(closeSplitCard);
+      }
+    });
+
+    workoutDays.forEach((day) => {
+      const summary = day.querySelector("summary");
+
+      summary.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        if (day.classList.contains("open")) {
+          closeWorkoutDay(day);
+          return;
+        }
+
+        workoutDays.forEach((otherDay) => {
+          if (otherDay !== day) {
+            closeWorkoutDay(otherDay);
+          }
+        });
+        openWorkoutDay(day);
+      });
+    });
+
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".workout-split-card.open .split-schedule").forEach((panel) => {
+        panel.style.maxHeight = `${panel.scrollHeight}px`;
+      });
+      document.querySelectorAll(".workout-day.open .workout-day-body").forEach((panel) => {
+        panel.style.maxHeight = `${panel.scrollHeight}px`;
+      });
+    });
+
+  </script>
+{% endblock %}

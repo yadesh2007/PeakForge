@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Create Account" if mode == "register" else "Login" }} | PeakForge{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+  <main class="auth-layout">
+    <section class="auth-hero">
+      <p class="eyebrow">Personal fitness operating system</p>
+      <h1>Build a routine you can actually stick with.</h1>
+      <p class="hero-copy">
+        Log workouts, review weekly training progress, and keep your consistency streak alive.
+      </p>
+      <div class="feature-list">
+        <div>
+          <strong>Workout logging</strong>
+          <span>Sets, reps, weight, notes</span>
+        </div>
+        <div>
+          <strong>Training records</strong>
+          <span>Recent sessions and full training records without spreadsheet pain</span>
+        </div>
+        <div>
+          <strong>Streak tracking</strong>
+          <span>See how consistent your training really is</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-card auth-panel">
+      <div class="panel-heading">
+        <p class="eyebrow">{{ "New account" if mode == "register" else "Welcome back" }}</p>
+        <h2>{{ "Create your account" if mode == "register" else "Login to continue" }}</h2>
+      </div>
+
+      {% if mode == "register" %}
+        <form method="post" class="form-grid single-column">
+          <label>
+            Email
+            <input type="email" name="email" required>
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" minlength="8" required>
+          </label>
+          <label>
+            Confirm password
+            <input type="password" name="confirm_password" minlength="8" required>
+          </label>
+          <button type="submit" class="button primary-button">Create account</button>
+        </form>
+        <p class="panel-footer">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+      {% else %}
+        <form method="post" class="form-grid single-column">
+          <label>
+            Email
+            <input type="email" name="email" required>
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" required>
+          </label>
+          <button type="submit" class="button primary-button">Login</button>
+        </form>
+        <p class="panel-footer">Need an account? <a href="{{ url_for('register') }}">Register</a></p>
+      {% endif %}
+    </section>
+  </main>
+{% endblock %}

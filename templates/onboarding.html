@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Profile | PeakForge{% endblock %}
+{% block body_class %}onboarding-page{% endblock %}
+
+{% block content %}
+  <main class="onboarding-layout">
+    <section class="onboarding-intro">
+      <p class="eyebrow">Profile setup</p>
+      <h1>Tell us where you are starting.</h1>
+      <p class="support-copy">
+        A quick start is enough. You can add training details later from Edit Profile.
+      </p>
+    </section>
+
+    <form method="post" class="form-grid onboarding-form flat-form">
+      <label>
+        Full name
+        <input type="text" name="full_name" value="{{ profile['full_name'] if profile else '' }}" required>
+      </label>
+      <label>
+        Age
+        <input type="number" name="age" min="10" max="120" value="{{ profile['age'] if profile else '' }}" required>
+      </label>
+
+      <div class="full-span form-actions">
+        <button type="submit" class="button primary-button">Save profile and continue</button>
+      </div>
+    </form>
+  </main>
+{% endblock %}

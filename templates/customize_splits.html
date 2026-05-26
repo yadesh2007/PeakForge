@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Customize Splits | PeakForge{% endblock %}
+{% block body_class %}planner-page{% endblock %}
+
+{% macro split_editor(program, action, button_label, split_name='', selected_slug='') %}
+  <form class="settings-form split-builder-form scroll-animate" method="post" data-split-builder>
+    <input type="hidden" name="action" value="{{ action }}">
+    {% if selected_slug %}
+      <input type="hidden" name="selected_slug" value="{{ selected_slug }}">
+    {% endif %}
+    <label>
+      Split Name
+      <input type="text" name="split_name" value="{{ split_name }}" required>
+    </label>
+
+    <div class="split-builder-days" data-days>
+      {% for day in program %}
+        {% set day_index = loop.index0 %}
+        <section class="split-builder-day" data-day>
+          <div class="split-builder-heading">
+            <label>
+              Workout Day
+              <input type="text" name="day_name[]" value="{{ day['day'] }}" required>
+            </label>
+            <label>
+              Focus
+              <input type="text" name="day_focus[]" value="{{ day['focus'] }}">
+            </label>
+            <button type="button" class="button secondary-button compact-button" data-remove-day>Remove Day</button>
+          </div>
+          <div class="split-builder-exercises" data-exercises>
+            {% for exercise in day['exercises'] %}
+              <div class="split-builder-exercise" data-exercise>
+                <input type="hidden" name="exercise_day_index[]" value="{{ day_index }}" data-day-index>
+                <label>
+                  Exercise
+                  <input type="text" name="exercise_name[]" value="{{ exercise['name'] }}" required>
+                </label>
+                <label>
+                  Sets
+                  <input type="text" name="exercise_sets[]" value="{{ exercise['sets'] }}">
+                </label>
+                <label>
+                  Reps
+                  <input type="text" name="exercise_reps[]" value="{{ exercise['reps'] }}">
+                </label>
+                <label>
+                  Rest
+                  <input type="text" name="exercise_rest[]" value="{{ exercise['rest'] }}">
+                </label>
+                <button type="button" class="button secondary-button compact-button" data-remove-exercise>Remove</button>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="button secondary-button compact-button" data-add-exercise>Add Exercise</button>
+        </section>
+      {% endfor %}
+    </div>
+
+    <div class="split-builder-actions">
+      <button type="button" class="button secondary-button" data-add-day>Add Workout Day</button>
+      <button type="submit" class="button primary-button">{{ button_label }}</button>
+    </div>
+  </form>
+{% endmacro %}
+
+{% block content %}
+  <main class="planner-layout">
+    <section class="planner-hero scroll-animate">
+      <p class="eyebrow"></p>
+      <h1>Customize Splits</h1>
+      <p class="support-copy">Tune an existing split or create your own training structure.</p>
+    </section>
+
+    <section class="profile-section scroll-animate">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow">Option A</p>
+          <h2>Customize Existing Split</h2>
+        </div>
+      </div>
+      <nav class="split-picker" aria-label="Choose split to customize">
+        {% for split in split_cards %}
+          <a href="{{ url_for('customize_splits', split=split['slug']) }}" class="split-picker-link {{ 'active' if split['slug'] == selected_slug else '' }}">
+            {{ split['name'] }}
+          </a>
+        {% endfor %}
+      </nav>
+      {% if selected_split %}
+        {{ split_editor(selected_split['program'], 'save_existing', 'Save Customization', selected_split['name'], selected_slug) }}
+      {% endif %}
+    </section>
+
+    <section class="profile-section scroll-animate">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow">Option B</p>
+          <h2>Create New Split</h2>
+        </div>
+      </div>
+      {{ split_editor([{'day': 'Day 1', 'focus': '', 'exercises': [{'name': '', 'sets': '3', 'reps': '8-12', 'rest': ''}]}], 'create_split', 'Create Split', '') }}
+    </section>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/split-builder.js') }}"></script>
+{% endblock %}

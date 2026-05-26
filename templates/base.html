@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PeakForge{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="site-shell">
+    <header class="site-header">
+      <a href="{{ url_for('index') }}" class="brand-mark">PeakForge</a>
+      {% if current_user %}
+        {% set display_name = current_profile['full_name'] if current_profile else current_user['email'] %}
+        <div class="profile-menu" data-profile-menu>
+          <button class="profile-avatar-button" type="button" aria-label="Open profile menu" aria-haspopup="menu" aria-expanded="false" data-profile-trigger>
+            {% if current_user['profile_image_path'] %}
+              <img src="{{ url_for('static', filename=current_user['profile_image_path']) }}" alt="" class="profile-avatar-image" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+              <span class="profile-avatar-fallback" aria-hidden="true">{{ display_name[:1]|upper }}</span>
+            {% endif %}
+            {% if current_profile_incomplete %}
+              <span class="profile-completion-dot" aria-label="Profile incomplete"></span>
+            {% endif %}
+          </button>
+
+          <div class="profile-dropdown" role="menu" aria-label="Profile menu" hidden data-profile-dropdown>
+            <div class="profile-dropdown-user">
+              <strong>{{ display_name }}</strong>
+              <small>{{ current_user['email'] }}</small>
+            </div>
+            {% if current_profile %}
+              <a href="{{ url_for('profile') }}" role="menuitem" class="profile-dropdown-item">Profile</a>
+              <a href="{{ url_for('edit_profile') }}" role="menuitem" class="profile-dropdown-item">
+                Edit Profile
+                {% if current_profile_incomplete %}
+                  <span class="profile-menu-dot" aria-hidden="true"></span>
+                {% endif %}
+              </a>
+              <a href="{{ url_for('customize_splits') }}" role="menuitem" class="profile-dropdown-item">Splits</a>
+            {% endif %}
+            <form action="{{ url_for('logout') }}" method="post">
+              <button type="submit" role="menuitem" class="profile-dropdown-item danger-item">Logout</button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <script id="flask-flashes" type="application/json">
+          {{ messages|tojson }}
+        </script>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+
+  <div id="toast-container" aria-live="polite" aria-label="Notifications"></div>
+  <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
+  <script>
+    (() => {
+      const profileMenu = document.querySelector("[data-profile-menu]");
+      const profileTrigger = document.querySelector("[data-profile-trigger]");
+      const profileDropdown = document.querySelector("[data-profile-dropdown]");
+      const focusableSelector = "a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])";
+
+      function getDropdownFocusables() {
+        return profileDropdown ? Array.from(profileDropdown.querySelectorAll(focusableSelector)) : [];
+      }
+
+      function setProfileMenu(open) {
+        if (!profileMenu || !profileTrigger || !profileDropdown) {
+          return;
+        }
+
+        profileTrigger.setAttribute("aria-expanded", String(open));
+
+        if (open) {
+          profileDropdown.hidden = false;
+          window.requestAnimationFrame(() => {
+            profileMenu.classList.add("open");
+            getDropdownFocusables()[0]?.focus();
+          });
+        } else {
+          profileMenu.classList.remove("open");
+          window.setTimeout(() => {
+            if (!profileMenu.classList.contains("open")) {
+              profileDropdown.hidden = true;
+            }
+          }, 190);
+        }
+      }
+
+      profileTrigger?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        setProfileMenu(!profileMenu?.classList.contains("open"));
+      });
+
+      document.addEventListener("click", (event) => {
+        if (profileMenu?.classList.contains("open") && !profileMenu.contains(event.target)) {
+          setProfileMenu(false);
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (!profileMenu?.classList.contains("open")) {
+          return;
+        }
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setProfileMenu(false);
+          profileTrigger?.focus();
+          return;
+        }
+
+        if (event.key === "Tab") {
+          const focusables = getDropdownFocusables();
+          if (!focusables.length) {
+            return;
+          }
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      profileDropdown?.querySelectorAll("a, button").forEach((item) => {
+        item.addEventListener("click", () => setProfileMenu(false));
+      });
+
+      const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const animatedBlocks = document.querySelectorAll(".scroll-animate");
+
+      if (motionQuery.matches) {
+        animatedBlocks.forEach((block) => block.classList.add("visible"));
+        return;
+      }
+
+      const headingObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle("glow-active", entry.isIntersecting);
+        });
+      }, { threshold: 0.45 });
+
+      const contentObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle("visible", entry.isIntersecting);
+        });
+      }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+
+      document.querySelectorAll(".section-title").forEach((heading) => {
+        headingObserver.observe(heading);
+      });
+
+      animatedBlocks.forEach((block) => {
+        contentObserver.observe(block);
+      });
+    })();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

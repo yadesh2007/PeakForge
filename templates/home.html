@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Home | PeakForge{% endblock %}
+{% block body_class %}home-page{% endblock %}
+
+{% block content %}
+  <main class="home-layout">
+    <section class="home-quote scroll-animate">
+      <h1 class="scroll-animate">Fit is not a destination, it is a way of life.</h1>
+      <p class="support-copy scroll-animate scroll-delay-1">
+        Keep the next action simple: train, log, recover, repeat.
+      </p>
+
+      <section class="home-calculator scroll-animate" aria-labelledby="macroCalculatorTitle">
+        <div class="calculator-heading">
+          <p class="eyebrow">Calorie deficit + macros</p>
+          <h2 id="macroCalculatorTitle">Set today's nutrition target.</h2>
+        </div>
+
+        <form class="macro-form" id="macroCalculator">
+          <label>
+            Age
+            <input type="number" name="age" min="10" max="120" value="{{ profile['age'] }}" required>
+          </label>
+          <label>
+            Gender
+            <select name="gender" required>
+              <option value="male" {% if profile['gender'] == 'Male' %}selected{% endif %}>Male</option>
+              <option value="female" {% if profile['gender'] == 'Female' %}selected{% endif %}>Female</option>
+            </select>
+          </label>
+          <label>
+            Weight (kg)
+            <input type="number" name="weight" min="20" max="350" step="0.1" value="{{ profile['start_weight_kg'] }}" required>
+          </label>
+          <label>
+            Height (cm)
+            <input type="number" name="height" min="50" max="250" step="0.1" value="{{ profile['height_cm'] }}" required>
+          </label>
+          <label>
+            Activity level
+            <select name="activity" required>
+              <option value="1.2">Sedentary</option>
+              <option value="1.375">Lightly active</option>
+              <option value="1.55" selected>Moderately active</option>
+              <option value="1.725">Very active</option>
+            </select>
+          </label>
+          <label>
+            Goal
+            <select name="goal" required>
+              <option value="fat-loss" {% if profile['goal'] == 'Lose weight' %}selected{% endif %}>Fat loss</option>
+              <option value="maintain" {% if profile['goal'] in ['Stay active', 'Improve endurance', 'Recomposition'] %}selected{% endif %}>Maintain</option>
+              <option value="muscle-gain" {% if profile['goal'] in ['Gain weight', 'Gain muscle'] %}selected{% endif %}>Muscle gain</option>
+            </select>
+          </label>
+        </form>
+
+        <div class="macro-results" id="macroResults" aria-live="polite">
+          <div>
+            <small>TDEE</small>
+            <strong data-result="tdee">--</strong>
+          </div>
+          <div>
+            <small>Target</small>
+            <strong data-result="target">--</strong>
+          </div>
+          <div>
+            <small>Protein</small>
+            <strong data-result="protein">--</strong>
+          </div>
+          <div>
+            <small>Carbs</small>
+            <strong data-result="carbs">--</strong>
+          </div>
+          <div>
+            <small>Fats</small>
+            <strong data-result="fat">--</strong>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="workout-splits-sidebar" role="navigation" aria-label="Workout splits navigation">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Workout Splits</h2>
+      </div>
+      <nav class="splits-nav">
+        {% for split in split_cards %}
+          <a 
+            href="{{ url_for('split_planner', slug=split['slug']) }}"
+            class="split-sidebar-card"
+            data-split-slug="{{ split['slug'] }}"
+            title="{{ split['name'] }}"
+          >
+            <span class="sidebar-split-icon" aria-hidden="true">{{ split['icon'] }}</span>
+            <div class="sidebar-split-info">
+              <strong class="sidebar-split-name">{{ split['name'] }}</strong>
+              <small class="sidebar-split-desc">{{ split['description'] }}</small>
+            </div>
+          </a>
+        {% endfor %}
+      </nav>
+    </aside>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    const macroCalculator = document.getElementById("macroCalculator");
+    const macroResults = document.getElementById("macroResults");
+    const activityFactors = {
+      "1.2": 1.2,
+      "1.375": 1.375,
+      "1.55": 1.55,
+      "1.725": 1.725,
+    };
+    const goalSettings = {
+      "fat-loss": { calorieOffset: -500, proteinPerKg: 2.2 },
+      maintain: { calorieOffset: 0, proteinPerKg: 1.8 },
+      "muscle-gain": { calorieOffset: 300, proteinPerKg: 2.0 },
+    };
+
+    function setMacroResult(name, value, unit) {
+      macroResults.querySelector(`[data-result="${name}"]`).textContent = `${value} ${unit}`;
+    }
+
+    function calculateMacros() {
+      const formData = new FormData(macroCalculator);
+      const age = Number(formData.get("age"));
+      const weight = Number(formData.get("weight"));
+      const height = Number(formData.get("height"));
+      const gender = formData.get("gender");
+      const activity = activityFactors[formData.get("activity")];
+      const goal = goalSettings[formData.get("goal")];
+
+      if (!age || !weight || !height || !activity || !goal) {
+        return;
+      }
+
+      const bmr = (10 * weight) + (6.25 * height) - (5 * age) + (gender === "male" ? 5 : -161);
+      const tdee = Math.round(bmr * activity);
+      const calorieTarget = Math.round(tdee + goal.calorieOffset);
+      const protein = Math.round(weight * goal.proteinPerKg);
+      const fat = Math.round((calorieTarget * 0.25) / 9);
+      const carbs = Math.max(0, Math.round((calorieTarget - (protein * 4) - (fat * 9)) / 4));
+
+      setMacroResult("tdee", tdee, "cal");
+      setMacroResult("target", calorieTarget, "cal");
+      setMacroResult("protein", protein, "g");
+      setMacroResult("carbs", carbs, "g");
+      setMacroResult("fat", fat, "g");
+    }
+
+    if (macroCalculator) {
+      macroCalculator.querySelectorAll("input, select").forEach((field) => {
+        field.addEventListener("input", calculateMacros);
+        field.addEventListener("change", calculateMacros);
+      });
+      calculateMacros();
+    }
+
+    (() => {
+      const splitCards = document.querySelectorAll('.split-sidebar-card');
+      const currentPath = window.location.pathname;
+      
+      const pathMatch = currentPath.match(/\/planner\/([a-z0-9\-]+)/);
+      const currentSlug = pathMatch ? pathMatch[1] : null;
+
+      splitCards.forEach((card) => {
+        const cardSlug = card.getAttribute('data-split-slug');
+        if (cardSlug === currentSlug) {
+          card.classList.add('active');
+        }
+      });
+
+      // Add hover and interaction feedback
+      splitCards.forEach((card) => {
+        card.addEventListener('click', (e) => {
+          splitCards.forEach((c) => c.classList.remove('active'));
+          card.classList.add('active');
+          
+          e.preventDefault();
+          setTimeout(() => {
+            window.location.href = card.href;
+          }, 120);
+        });
+
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            card.click();
+          }
+        });
+      });
+
+      const sidebar = document.querySelector('.workout-splits-sidebar');
+      if (sidebar && window.innerWidth < 1024) {
+        const activeCard = sidebar.querySelector('.split-sidebar-card.active');
+        if (activeCard) {
+          setTimeout(() => {
+            activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 300);
+        }
+      }
+    })();
+  </script>
+{% endblock %}

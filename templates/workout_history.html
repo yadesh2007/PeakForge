@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}PeakForge{% endblock %}
+{% block body_class %}workout-history-page{% endblock %}
+
+{% block content %}
+  <main class="history-layout">
+    <section class="planner-hero scroll-animate">
+      <p class="eyebrow"></p>
+      <h1>All logged sessions</h1>
+      <p class="support-copy">
+        Review every saved training session, newest first.
+      </p>
+    </section>
+
+    <section class="profile-section workout-history-section scroll-animate" aria-labelledby="historyTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow">Session archive</p>
+          <h2 id="historyTitle">Workout log</h2>
+        </div>
+      </div>
+
+      <div class="history-session-list">
+        {% if workout_sessions %}
+          {% for item in workout_sessions %}
+            {% set workout = item['session'] %}
+            <article class="history-session">
+              <header class="history-session-header">
+                <div>
+                  <strong>{{ workout['split_day'] or workout['split_type'] }}</strong>
+                  <small>{{ workout['session_date'] }} · {{ workout['split_type'] }}</small>
+                </div>
+                <span>{{ item['exercises']|length }} exercise{{ '' if item['exercises']|length == 1 else 's' }}</span>
+              </header>
+
+              <div class="history-exercise-list">
+                {% for exercise in item['exercises'] %}
+                  <div class="history-exercise">
+                    <strong>{{ exercise['exercise_name'] }}</strong>
+                    <span>{{ exercise['sets_count'] }} sets x {{ exercise['reps_count'] }} reps · {{ exercise['weight_kg'] }} kg</span>
+                    {% if exercise['notes'] %}
+                      <small>{{ exercise['notes'] }}</small>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+
+              {% if workout['notes'] %}
+                <p class="history-notes">{{ workout['notes'] }}</p>
+              {% endif %}
+            </article>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state dark-empty-state">
+            No workouts logged yet. Start a split, save your lifts, and your training archive will build here.
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+{% endblock %}

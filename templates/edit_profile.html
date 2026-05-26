@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile | PeakForge{% endblock %}
+{% block body_class %}profile-page{% endblock %}
+
+{% block content %}
+  <main class="profile-layout">
+    <section class="planner-hero scroll-animate">
+      <p class="eyebrow">Profile settings</p>
+      <h1>Edit profile</h1>
+      <p class="support-copy">Update your account details and the avatar shown across PeakForge.</p>
+    </section>
+
+    <form class="settings-form scroll-animate" method="post" enctype="multipart/form-data">
+      <div class="settings-grid">
+        <label>
+          Username
+          <input type="text" name="full_name" value="{{ profile['full_name'] }}" required>
+        </label>
+        <label>
+          Age
+          <input type="number" name="age" min="10" max="120" value="{{ profile['age'] }}" required>
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" value="{{ user['email'] }}" required>
+        </label>
+        <label>
+          Fitness goal
+          <select name="goal">
+            <option value="">Select later</option>
+            {% for option in ["Lose weight", "Gain weight", "Gain muscle", "Improve endurance", "Recomposition", "Stay active"] %}
+              <option value="{{ option }}" {% if profile['goal'] == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          Height (cm)
+          <input type="number" name="height_cm" min="0" max="250" step="0.1" value="{{ profile['height_cm'] if profile['height_cm'] else '' }}" placeholder="Optional">
+        </label>
+        <label>
+          Current weight (kg)
+          <input type="number" name="start_weight_kg" min="0" max="350" step="0.1" value="{{ profile['start_weight_kg'] if profile['start_weight_kg'] else '' }}" placeholder="Optional">
+        </label>
+        <label>
+          Goal weight (kg)
+          <input type="number" name="goal_weight_kg" min="0" max="350" step="0.1" value="{{ profile['goal_weight_kg'] if profile['goal_weight_kg'] else '' }}" placeholder="Optional">
+        </label>
+        <label>
+          Gender
+          <select name="gender">
+            <option value="">Select later</option>
+            {% for option in ["Male", "Female", "Non-binary", "Prefer not to say"] %}
+              <option value="{{ option }}" {% if profile['gender'] == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          Nationality
+          <input type="text" name="nationality" value="{{ profile['nationality'] or '' }}" placeholder="Optional">
+        </label>
+        <label class="settings-full">
+          Bio
+          <textarea name="bio" rows="4" placeholder="Optional">{{ profile['bio'] or '' }}</textarea>
+        </label>
+        <label class="settings-full">
+          Profile image
+          <input type="file" name="profile_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-image-input>
+        </label>
+      </div>
+
+      <div class="profile-image-preview" aria-live="polite">
+        {% if user['profile_image_path'] %}
+          <img src="{{ url_for('static', filename=user['profile_image_path']) }}" alt="Current profile image" data-image-preview style="width: 112px; height: 112px; border-radius: 50%; object-fit: cover;">
+        {% else %}
+          <div class="profile-image-preview-fallback" data-image-preview-fallback>{{ profile['full_name'][:1]|upper }}</div>
+          <img src="" alt="Selected profile image preview" data-image-preview hidden style="width: 112px; height: 112px; border-radius: 50%; object-fit: cover;">
+        {% endif %}
+      </div>
+
+      <div class="planner-save-row">
+        <button type="submit" class="button primary-button">Save Profile</button>
+      </div>
+    </form>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/profile-preview.js') }}"></script>
+{% endblock %}

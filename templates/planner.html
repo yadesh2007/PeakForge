@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ split_name }} Planner | PeakForge{% endblock %}
+{% block body_class %}planner-page{% endblock %}
+
+{% block content %}
+  <main class="planner-layout">
+    <section class="planner-hero scroll-animate">
+      <p class="eyebrow">Workout planner</p>
+      <h1>{{ split_name }}</h1>
+      <p class="support-copy">
+        Follow the weekly structure, enter your performed numbers, and save the workout log when you finish.
+      </p>
+    </section>
+
+    <form class="planner-form scroll-animate" action="{{ url_for('save_planner_log', slug=split_slug) }}" method="post">
+      <section class="planner-week">
+        {% for day in plan %}
+          <article class="planner-day-card split-day-section">
+            <button type="button" class="planner-day-toggle" aria-expanded="{{ 'true' if loop.first else 'false' }}">
+              <span>
+                <strong>{{ day['day'] }}</strong>
+                <small>{{ day['focus'] }}</small>
+              </span>
+              <span aria-hidden="true">v</span>
+            </button>
+            <div class="planner-day-panel">
+              <div class="planner-exercise-list">
+                {% for exercise in day['exercises'] %}
+                  <div class="planner-exercise-card">
+                    <div class="planner-exercise-summary">
+                      <strong>{{ exercise['name'] }}</strong>
+                      <span>{{ exercise['sets'] }} sets x {{ exercise['reps'] }} reps</span>
+                      {% if exercise['rest'] %}
+                        <small>Rest {{ exercise['rest'] }}</small>
+                      {% endif %}
+                    </div>
+                    <input type="hidden" name="day_name[]" value="{{ day['day'] }}">
+                    <input type="hidden" name="exercise_name[]" value="{{ exercise['name'] }}">
+                    <input type="hidden" name="prescribed_sets[]" value="{{ exercise['sets'] }}">
+                    <input type="hidden" name="prescribed_reps[]" value="{{ exercise['reps'] }}">
+                    <label>
+                      Weight Used
+                      <input type="number" min="0" step="0.1" name="weight_used[]" placeholder="kg">
+                    </label>
+                    <label>
+                      Reps Completed
+                      <input type="number" min="0" step="1" name="reps_completed[]" placeholder="reps">
+                    </label>
+                    <label class="planner-notes-field inline-notes-field">
+                      <textarea name="notes[]" rows="1" placeholder="Add notes..." aria-label="Exercise notes"></textarea>
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </section>
+
+      <div class="planner-save-row">
+        <button type="submit" class="button primary-button">Save Workout Log</button>
+      </div>
+    </form>
+
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    document.querySelectorAll(".planner-day-card").forEach((card, index) => {
+      const panel = card.querySelector(".planner-day-panel");
+      const toggle = card.querySelector(".planner-day-toggle");
+
+      function setOpen(open) {
+        card.classList.toggle("active", open);
+        toggle.setAttribute("aria-expanded", String(open));
+        panel.style.maxHeight = open ? `${panel.scrollHeight}px` : "0px";
+      }
+
+      setOpen(index === 0);
+      toggle.addEventListener("click", () => {
+        const shouldOpen = !card.classList.contains("active");
+        document.querySelectorAll(".planner-day-card").forEach((item) => {
+          item.classList.remove("active");
+          item.querySelector(".planner-day-toggle")?.setAttribute("aria-expanded", "false");
+          const itemPanel = item.querySelector(".planner-day-panel");
+          if (itemPanel) itemPanel.style.maxHeight = "0px";
+        });
+        setOpen(shouldOpen);
+      });
+    });
+
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".planner-day-card.active .planner-day-panel").forEach((panel) => {
+        panel.style.maxHeight = `${panel.scrollHeight}px`;
+      });
+    });
+  </script>
+{% endblock %}

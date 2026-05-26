@@ -1,0 +1,15 @@
+instance/*.db
+__pycache__/
+venv/
+.env
+*.pyc
+
+# Common local-only files
+.venv/
+env/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Profile | PeakForge{% endblock %}
+{% block body_class %}profile-page{% endblock %}
+
+{% block content %}
+  <main class="profile-layout">
+    <section class="profile-hero profile-quick-action-card scroll-animate">
+      <div class="profile-hero-copy">
+        <div class="quick-action-top">
+          {% if current_user['profile_image_path'] %}
+            <img src="{{ url_for('static', filename=current_user['profile_image_path']) }}" alt="" class="profile-hero-avatar" style="width: 82px; height: 82px; border-radius: 50%; object-fit: cover;">
+          {% endif %}
+          <div class="quick-action-text">
+            <h1>{{ profile['full_name'] }}</h1>
+            {% if profile['bio'] %}
+              <p class="support-copy">{{ profile['bio'] }}</p>
+            {% endif %}
+            <p class="support-copy">
+              {{ profile['goal'] }} with {{ selected_split }}. Keep the next action simple: train, log, recover, repeat.
+            </p>
+          </div>
+        </div>
+        <div class="home-actions quick-action-main">
+          <a href="{{ url_for('index') }}" class="button primary-button">Start Workout</a>
+        </div>
+      </div>
+      <div class="profile-streak" aria-label="Daily workout streak">
+        <span class="streak-ring-value">{{ metrics['streak_days'] }}</span>
+        <span class="streak-ring-label">day streak</span>
+      </div>
+    </section>
+
+    <section class="profile-section profile-activity-section scroll-animate" aria-labelledby="profileStatsTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow"></p>
+          <h2 id="profileStatsTitle"></h2>
+        </div>
+      </div>
+
+      <div class="profile-metrics activity-stats-row" aria-label="Profile training metrics">
+        <div class="metric-tile">
+          <strong>{{ metrics['weekly_workouts'] }}</strong>
+          <small>Workouts</small>
+        </div>
+        <div class="metric-tile">
+          <strong>{{ metrics['weekly_exercises'] }}</strong>
+          <small>Exercises Logged</small>
+        </div>
+        <div class="metric-tile">
+          <strong>{{ goal_progress }}%</strong>
+          <small>Weekly Target</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-section split-activity-card-section scroll-animate" aria-labelledby="trainingFocusTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow"></p>
+          <h2 id="trainingFocusTitle"></h2>
+        </div>
+      </div>
+
+      <ul class="split-summary-list">
+        <li>
+          <span>Preferred split</span>
+          <strong>{{ selected_split }}</strong>
+        </li>
+        <li>
+          <span>Today</span>
+          <strong>{{ today_workout['day'] }}</strong>
+        </li>
+        <li>
+          <span>Focus</span>
+          <strong>{{ today_workout['focus'] }}</strong>
+        </li>
+        <li>
+          <span>Next session</span>
+          <strong>{{ next_workout['day'] }}</strong>
+        </li>
+      </ul>
+    </section>
+
+    <section class="profile-section workout-history-section scroll-animate" id="workout-log" aria-labelledby="historyTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow"></p>
+          <h2 id="historyTitle">Recent sessions</h2>
+        </div>
+        <a href="{{ url_for('workout_history') }}" class="text-action">View</a>
+      </div>
+
+      <div class="session-list">
+        {% if recent_sessions %}
+          {% for item in recent_sessions %}
+            {% set workout = item['session'] %}
+            <article class="session-row">
+              <div class="session-toggle session-summary">
+                <span>
+                  <strong>{{ workout['split_day'] or workout['split_type'] }}</strong>
+                  <small>{{ workout['session_date'] }} · {{ workout['split_type'] }}</small>
+                </span>
+                <span>{{ item['exercises']|length }} exercise{{ '' if item['exercises']|length == 1 else 's' }}</span>
+              </div>
+
+              <div class="session-panel">
+                <div class="session-exercises">
+                  {% for exercise in item['exercises'] %}
+                    <div class="session-exercise">
+                      <strong>{{ exercise['exercise_name'] }}</strong>
+                      <span>{{ exercise['sets_count'] }} sets x {{ exercise['reps_count'] }} reps · {{ exercise['weight_kg'] }} kg</span>
+                      {% if exercise['notes'] %}
+                        <small>{{ exercise['notes'] }}</small>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                  {% if workout['notes'] %}
+                    <p>{{ workout['notes'] }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state dark-empty-state">No workout sessions logged yet. Save your next split session and it will appear here.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="profile-section profile-weight-section scroll-animate" aria-labelledby="weightGoalTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow"></p>
+          <h2 id="weightGoalTitle">Weight goal</h2>
+        </div>
+      </div>
+      <div class="weight-goal-display">
+        <div class="weight-goal-values">
+          <div>
+            <small>Current Weight</small>
+            <strong>{{ profile['start_weight_kg'] }} kg</strong>
+          </div>
+          <div>
+            <small>Goal Weight</small>
+            <strong>{{ profile['goal_weight_kg'] }} kg</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}
