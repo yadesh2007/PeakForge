@@ -1182,6 +1182,25 @@ def has_completed_profile(user, profile=None):
     return has_minimum_profile(profile)
 
 
+def get_profile_completion_items(user, profile):
+    profile = profile or {}
+    user = user or {}
+
+    return {
+        "name": has_completed_profile(user, profile),
+        "age": has_completed_profile(user, profile),
+        "gender": bool(str(profile["gender"] or "").strip()) if profile else False,
+        "fitness_goal": bool(str(profile["goal"] or "").strip()) if profile else False,
+        "profile_image": bool(user["profile_image_path"]) if user and "profile_image_path" in user.keys() else False,
+    }
+
+
+def get_profile_completion_percent(user, profile):
+    items = get_profile_completion_items(user, profile)
+    completed_items = sum(1 for completed in items.values() if completed)
+    return completed_items * 20
+
+
 def get_current_user():
     user_id = session.get("user_id")
     if not user_id:
@@ -1199,7 +1218,8 @@ def get_current_user():
 
 
 def is_profile_incomplete(profile, user=None):
-    return not has_completed_profile(user, profile)
+    items = get_profile_completion_items(user, profile)
+    return not all(items.values())
 
 
 def get_local_today():
@@ -1327,6 +1347,7 @@ def inject_user():
         "current_user": user,
         "current_profile": profile,
         "current_profile_incomplete": is_profile_incomplete(profile, user),
+        "current_profile_completion_percent": get_profile_completion_percent(user, profile) if user else 0,
     }
 
 
@@ -1792,7 +1813,12 @@ def edit_profile():
         flash("Profile updated.", "success")
         return redirect(url_for("profile"))
 
-    return render_template("edit_profile.html", user=user, profile=profile)
+    return render_template(
+        "edit_profile.html",
+        user=user,
+        profile=profile,
+        profile_completion_percent=get_profile_completion_percent(user, profile),
+    )
 
 
 @app.route("/customize-splits", methods=("GET", "POST"))
