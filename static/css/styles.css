@@ -291,32 +291,18 @@ textarea {
 .profile-completion-dot,
 .profile-menu-dot {
   display: inline-block;
-  width: 0.56rem;
-  height: 0.56rem;
+  width: 0.54rem;
+  height: 0.54rem;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: #ffb340;
-  box-shadow: 0 0 0 3px rgba(255, 179, 64, 0.16), 0 0 14px rgba(255, 179, 64, 0.42);
-  animation: profile-dot-pulse 2.4s ease-in-out infinite;
+  background: #f7cf5c;
+  box-shadow: 0 0 0 3px rgba(247, 207, 92, 0.16), 0 0 12px rgba(247, 207, 92, 0.34);
 }
 
 .profile-completion-dot {
   position: absolute;
   right: 0.05rem;
   top: 0.05rem;
-}
-
-@keyframes profile-dot-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px rgba(255, 179, 64, 0.14), 0 0 12px rgba(255, 179, 64, 0.34);
-    transform: scale(1);
-  }
-
-  50% {
-    box-shadow: 0 0 0 5px rgba(255, 179, 64, 0.08), 0 0 18px rgba(255, 179, 64, 0.5);
-    transform: scale(1.08);
-  }
 }
 
 .profile-dropdown-item:hover,
@@ -997,50 +983,6 @@ textarea {
 .settings-form {
   width: min(980px, 100%);
   color: #f7fbf8;
-}
-
-.profile-completion-panel {
-  display: grid;
-  gap: 0.7rem;
-  margin-bottom: 1.2rem;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.profile-completion-copy {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  color: rgba(247, 251, 248, 0.72);
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.profile-completion-copy strong {
-  color: #ffb340;
-  font-family: "Sora", sans-serif;
-  font-size: 1rem;
-}
-
-.profile-completion-track {
-  height: 0.48rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.profile-completion-track span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ffb340, #f7cf5c);
-  box-shadow: 0 0 18px rgba(255, 179, 64, 0.28);
-  transition: width 220ms ease;
 }
 
 .settings-grid,
