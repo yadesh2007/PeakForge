@@ -1009,7 +1009,81 @@ textarea {
 }
 
 .settings-form input,
-.settings-form textarea,
+.settings-form select,
+.settings-form textarea {
+  width: 100%;
+  min-width: 0;
+  color: #ffffff;
+  caret-color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.settings-form input::placeholder,
+.settings-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.settings-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.4rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.05rem) 50%,
+    calc(100% - 0.72rem) 50%;
+  background-size: 0.36rem 0.36rem, 0.36rem 0.36rem;
+  background-repeat: no-repeat;
+  color-scheme: dark;
+}
+
+.settings-form select option {
+  color: #ffffff;
+  background: #11191b;
+}
+
+.settings-form input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.settings-form input[type="number"]::-webkit-outer-spin-button,
+.settings-form input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.settings-form input:focus,
+.settings-form select:focus,
+.settings-form textarea:focus {
+  outline: 0;
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+.settings-form input:-webkit-autofill,
+.settings-form input:-webkit-autofill:hover,
+.settings-form input:-webkit-autofill:focus,
+.settings-form textarea:-webkit-autofill,
+.settings-form textarea:-webkit-autofill:hover,
+.settings-form textarea:-webkit-autofill:focus,
+.settings-form select:-webkit-autofill,
+.settings-form select:-webkit-autofill:hover,
+.settings-form select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset;
+  transition: background-color 9999s ease-out, color 9999s ease-out;
+}
+
 .split-builder-form input {
   width: 100%;
   min-width: 0;
@@ -1021,8 +1095,6 @@ textarea {
   padding: 0.68rem 0;
 }
 
-.settings-form input:focus,
-.settings-form textarea:focus,
 .split-builder-form input:focus {
   outline: 0;
   border-color: rgba(247, 207, 92, 0.72);
@@ -2465,10 +2537,42 @@ textarea {
   transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
+.flat-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.4rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.05rem) 50%,
+    calc(100% - 0.72rem) 50%;
+  background-size: 0.36rem 0.36rem, 0.36rem 0.36rem;
+  background-repeat: no-repeat;
+  color-scheme: dark;
+}
+
 .flat-form input::placeholder,
 .flat-form select::placeholder,
 .flat-form textarea::placeholder {
   color: rgba(255, 255, 255, 0.45);
+}
+
+.flat-form select option {
+  color: #ffffff;
+  background: #11191b;
+}
+
+.flat-form input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.flat-form input[type="number"]::-webkit-outer-spin-button,
+.flat-form input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
 }
 
 .flat-form input:focus,
